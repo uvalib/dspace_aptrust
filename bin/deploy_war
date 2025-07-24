@@ -1,0 +1,29 @@
+#! /bin/bash
+#
+# deploy_war - deploy the WAR file to the DSpace Tomcat
+#
+# NOTE: This assumes that dspace_utils scripts are available on $PATH.
+
+PROGRAM=`realpath "$0"`
+BIN_DIR=`dirname "$PROGRAM"`
+PRJ_DIR=`dirname "$BIN_DIR"`
+
+source "$BIN_DIR/values"
+
+SERVICE='tomcat10'
+TC_DIR="/var/lib/$SERVICE"
+DST_DIR="$TC_DIR/webapps"
+
+# Re-create the webapp.
+clear
+"$BIN_DIR/make_war" || exit $?
+
+# Deploy to remote Tomcat.
+echo
+echo "Updating DSpace $SERVICE service..."
+dspace_cp_to "$PRJ_DIR/$WAR_NAME" &&
+dspace_sh "
+    sudo -u dspace cp '$WAR_NAME' '$DST_DIR' &&
+    rm -f '$WAR_NAME' &&
+    systemctl status $SERVICE | grep -v tomcat-users
+"

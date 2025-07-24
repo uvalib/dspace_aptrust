@@ -1,0 +1,59 @@
+#! /bin/bash
+#
+# make_war: Create the aptrust.war servlet in the project directory.
+
+PROGRAM=`realpath "$0"`
+BIN_DIR=`dirname "$PROGRAM"`
+PRJ_DIR=`dirname "$BIN_DIR"`
+
+source "$BIN_DIR/values"
+
+# Make sure Tomcat is readable.
+SERVICE='tomcat'
+TC_DIR="/opt/$SERVICE"
+TC_LIB="$TC_DIR/lib"
+if [[ ! -r "$TC_LIB" ]] ; then
+    echo "Make $TC_LIB available..."
+    sudo chmod +rx "$TC_DIR" "$TC_LIB" || exit $?
+fi
+
+# Make sure the servlet library is available.
+API_JAR="$TC_LIB/servlet-api.jar"
+if [[ ! -f "$API_JAR" ]] ; then
+    API_JAR="$TC_LIB/tomcat-servlet-api.jar"
+fi
+if [[ ! -f "$API_JAR" ]] ; then
+    echo 'Find servlet JAR...'
+    API_JAR=`ls "$TC_LIB"/*servlet*.jar`
+fi
+if [[ ! -f "$API_JAR" ]] ; then
+    echo 'Missing servlet JAR'
+    exit $ERROR_STATUS
+fi
+if [[ ! -r "$API_JAR" ]] ; then
+    echo "Make $API_JAR readable..."
+    sudo chmod +r "$API_JAR" || exit $?
+fi
+
+# Download the JSON library if necessary.
+APP_DIR="$PRJ_DIR/app"
+LIB_DIR="$APP_DIR/WEB-INF/lib"
+JSON_VERSION='20250517'
+JSON_FILE="json-$JSON_VERSION.jar"
+JSON_JAR="$LIB_DIR/$JSON_FILE"
+if [[ ! -f "$JSON_JAR" ]] ; then
+    MAVEN_REPO='https://repo.maven.apache.org/maven2'
+    echo "Downloading $JSON_FILE from $MAVEN_REPO"
+    DOWNLOAD_URL="$MAVEN_REPO/org/json/json/$JSON_VERSION/$JSON_FILE"
+    mkdir -p "$LIB_DIR" && curl "$DOWNLOAD_URL" > "$JSON_JAR"
+fi
+
+# Compile the servlet source.
+SRC_DIR="$PRJ_DIR/src"
+CLS_DIR="$APP_DIR/WEB-INF/classes"
+rm -rf "$CLS_DIR"
+javac -cp "$API_JAR:$JSON_JAR" -d "$CLS_DIR" "$SRC_DIR"/*.java || exit $?
+
+# Make the WAR file.
+cd "$APP_DIR" || exit $ERROR_STATUS
+jar -cvf "$PRJ_DIR/$WAR_NAME" *

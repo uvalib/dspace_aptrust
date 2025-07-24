@@ -1,0 +1,33 @@
+#! /bin/bash
+#
+# test_war - regenerate and install the WAR file on the local Tomcat
+#
+# When this script successfully completes, the application should be available
+# in the web browser at "http://localhost:8080/$SERVLET".
+#
+# NOTE: This clears Tomcat logs before restarting Tomcat.
+
+PROGRAM=`realpath "$0"`
+BIN_DIR=`dirname "$PROGRAM"`
+PRJ_DIR=`dirname "$BIN_DIR"`
+
+source "$BIN_DIR/values"
+
+SERVICE='tomcat'
+TC_DIR="/opt/$SERVICE"
+DST_DIR="$TC_DIR/webapps"
+
+# Re-create the webapp.
+clear
+"$BIN_DIR/make_war" || exit $?
+
+# Deploy to local Tomcat.
+echo
+echo "Updating local $SERVICE service..."
+sudo sh -c "
+    systemctl stop $SERVICE &&
+    rm -rf '$DST_DIR/$WAR_NAME' '$DST_DIR/$SERVLET' '$TC_DIR'/logs/* &&
+    cp '$PRJ_DIR/$WAR_NAME' '$DST_DIR' &&
+    systemctl start $SERVICE &&
+    systemctl --no-pager status $SERVICE
+"
