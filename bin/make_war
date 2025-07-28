@@ -43,8 +43,8 @@ JSON_FILE="json-$JSON_VERSION.jar"
 JSON_JAR="$LIB_DIR/$JSON_FILE"
 if [[ ! -f "$JSON_JAR" ]] ; then
     MAVEN_REPO='https://repo.maven.apache.org/maven2'
-    echo "Downloading $JSON_FILE from $MAVEN_REPO"
     DOWNLOAD_URL="$MAVEN_REPO/org/json/json/$JSON_VERSION/$JSON_FILE"
+    echo "Downloading $JSON_FILE from $MAVEN_REPO"
     mkdir -p "$LIB_DIR" && curl "$DOWNLOAD_URL" > "$JSON_JAR"
 fi
 
@@ -55,5 +55,5 @@ rm -rf "$CLS_DIR"
 javac -cp "$API_JAR:$JSON_JAR" -d "$CLS_DIR" "$SRC_DIR"/*.java || exit $?
 
 # Make the WAR file.
-cd "$APP_DIR" || exit $ERROR_STATUS
+cd "$APP_DIR" || exit $?
 jar -cvf "$PRJ_DIR/$WAR_NAME" *
