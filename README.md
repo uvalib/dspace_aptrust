@@ -79,9 +79,9 @@ the local machine at the location indicated in `bin/values`.
 
 ## Implementation Details
 
-A Solr query is performed to get the UUIDs of items added during the given date
-date range.
-For each item UUID, the DSpace API is used to retrieve its metadata and links to
-further API endpoints to retreive the content links of its component bitstreams
-(i.e. content files).
+A DSpace API request is used to retrieve metadata of items added during the
+given range.
+Each item's data includes API endpoints used to retreive the content links of
+its component bitstreams (i.e. content files).
+
 
